@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css?family=Noto+Serif|Nunito|Nunito+Sans|Poppins|McLaren&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta http-equiv="cache-control" content="no-cache" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <meta property="og:title" content="aDictionary">
+  <meta property="og:image" content="logo.png">
+  <meta property="og:description" content="A lightweight and simple dictionary app.">
+  <meta property="og:url" content="https://a-dictionary.web.app">
+  <title>aDictionary</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css?family=Noto+Serif|Nunito|Nunito+Sans|Poppins|McLaren&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 </head>
 <body>
   <div class="container">
@@ -24,7 +31,7 @@
       </form>
     </div>
     <div class="loading">
-      <p>Searching</p>
+      <p class="text">Searching</p>
     </div>
     <div class="definitions">
       <h1 class="word">Define</h1>
@@ -48,9 +55,16 @@
   </div>
 </footer>
 <script>
+var query;
 var form = document.querySelector('.search');
 var input = document.querySelector('.input');
 const loading = document.querySelector('.loading');
+const text = document.querySelector('.text')
+
+form.addEventListener("click", function(e){
+  loading.style.opacity = '0'
+  text.innerHTML = '';
+});
 
 form.addEventListener("submit", function(e){
   e.preventDefault();
@@ -61,23 +75,40 @@ if(form.addEventListener) {
 };
 
 function getDefinitions() {
-  loading.style.opacity = "1"
-  var query = input.value
-  var proxy = "https://cors-anywhere.herokuapp.com/"
-  var api = `${proxy}https://owlbot.info/api/v3/dictionary/${query}`
+  loading.style.opacity = '1'
+  query = input.value
+  input.disabled = true;
+  if (window.location.protocol!= "https:") {
+    var proxy = "https://cors-anywhere.herokuapp.com/"
+    var api = `${proxy}https://owlbot.info/api/v3/dictionary/${query}`
+  }
+  else {
+    var api = `https://owlbot.info/api/v3/dictionary/${query}`
+  }
+
   const options = {
     headers: {
       Authorization: "Token 38c64d8ec14da85071597eb847dfdee41559e5e2"
     }
   };
+  
   fetch(api, options)
   .then(response => {
-    return response.json();
+      if (!response.ok) {
+          document.querySelector('.word').textContent = "Error"
+          document.querySelector('.pronunciation').textContent = "ˈerər"
+          document.querySelector('.type').textContent = "word not found"
+          document.querySelector('.definition').textContent = "It's either the word you are trying to find does not exist in the database or you suck at spelling."
+          document.querySelector('.example').textContent = ""
+          loading.style.opacity = '0'
+          input.disabled = false;
+          exit();
+      }
+      return response.json();
   })
   .then(data => {
-    loading.style.opacity = "0"
-    console.log(data);
-    console.log(data.definitions[0]);
+    loading.style.opacity = '0'
+    input.disabled = false;
     document.querySelector('.word').textContent = data.word
     document.querySelector('.pronunciation').textContent = data.pronunciation
     document.querySelector('.type').textContent = data.definitions[0].type
@@ -86,8 +117,6 @@ function getDefinitions() {
     for(var i = 1; i < data.definitions.length; i++)
     {
       var row, col1, col2, num, type, definition, example
-
-      console.log(i+1)
       row = document.querySelector('.row')
       col1 = document.createElement('div')
       col1.className = 'col'
